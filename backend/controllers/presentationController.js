@@ -2,26 +2,43 @@ import fs from "fs";
 import path from "path";
 import { exec } from "child_process";
 
+// ✅ Windows path for LibreOffice
+const sofficePath = `"C:\\Program Files\\LibreOffice\\program\\soffice.exe"`;
+
+// ✅ UPLOAD + CONVERT CONTROLLER
 export const uploadPPT = (req, res) => {
   const filePath = path.resolve(req.file.path);
-  const outputDir = path.resolve("uploads", `slides_${Date.now()}`);
-  fs.mkdirSync(outputDir);
+  const outputDir = path.resolve("slides", Date.now().toString());
 
-  // Convert PPTX → images using LibreOffice
-  const command = `libreoffice --headless --convert-to png --outdir "${outputDir}" "${filePath}"`;
+  fs.mkdirSync(outputDir, { recursive: true });
 
-  exec(command, (err) => {
+  // ✅ Step 1 → Convert PPTX → PNG Slides
+  const convertCmd = `
+    ${sofficePath} --headless --convert-to "png:impress_png_Export" 
+    --outdir "${outputDir}" "${filePath}"
+  `;
+
+  exec(convertCmd, (err) => {
     if (err) {
-      console.error("❌ Conversion error:", err);
-      return res.status(500).json({ success: false, message: "Conversion failed" });
+      console.error("❌ LibreOffice Conversion Error:", err);
+      return res.json({ success: false, message: "Slide conversion failed" });
     }
 
-    // Get all slide images
-    const slides = fs
-      .readdirSync(outputDir)
-      .filter((f) => f.endsWith(".png"))
-      .map((f) => `http://localhost:5000/${path.join(outputDir, f)}`);
+    // ✅ Step 2 → Read all PNGs inside output folder
+    const allFiles = fs.readdirSync(outputDir);
 
-    res.json({ success: true, slides });
+    const slideImages = allFiles
+      .filter(f => f.endsWith(".png"))
+      .sort() // ensures correct slide order
+      .map(f => ({
+        url: `http://localhost:5000/${path.join(outputDir, f).replace(/\\/g, "/")}`
+      }));
+
+    if (slideImages.length === 0) {
+      return res.json({ success: false, message: "No slides were generated" });
+    }
+
+    console.log("✅ Slides generated:", slideImages.length);
+    return res.json({ success: true, slides: slideImages });
   });
 };

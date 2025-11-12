@@ -21,6 +21,7 @@ mongoose
 app.use("/api/system", systemRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/presentation", presentationRoutes);
+app.use("/slides", express.static("slides"));
 app.use("/uploads", express.static("uploads"));
 
 

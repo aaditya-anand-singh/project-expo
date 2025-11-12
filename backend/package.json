@@ -22,6 +22,8 @@
     "mongoose": "^8.19.3",
     "multer": "^2.0.2",
     "node-powershell": "^5.0.1",
-    "screenshot-desktop": "^1.15.3"
+    "nodemon": "^3.1.10",
+    "screenshot-desktop": "^1.15.3",
+    "sharp": "^0.34.5"
   }
 }
